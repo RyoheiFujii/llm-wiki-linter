@@ -1,0 +1,28 @@
+{
+  "name": "llm-wiki-linter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc && cp src/appsscript.json dist/appsscript.json",
+    "deploy": "npm run build && clasp push"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RyoheiFujii/llm-wiki-linter.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/RyoheiFujii/llm-wiki-linter/issues"
+  },
+  "homepage": "https://github.com/RyoheiFujii/llm-wiki-linter#readme",
+  "devDependencies": {
+    "@google/clasp": "^3.4.1",
+    "@types/google-apps-script": "^2.0.13",
+    "typescript": "^7.0.2"
+  }
+}

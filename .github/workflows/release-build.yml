@@ -13,8 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      id-token: write
-      attestations: write
+      id-token: write      # Sigstore短命証明書発行用
+      attestations: write  # GitHub Attestation Store書き込み用
       contents: read
     steps:
       - name: Checkout
@@ -38,7 +38,11 @@ jobs:
         run: |
           mkdir -p release
           TAR_NAME="llm-wiki-linter-${GITHUB_REF_NAME}.tar.gz"
-          tar -czf "release/${TAR_NAME}" dist package.json package-lock.json README.md
+          # 存在するファイルのみを対象にアーカイブ化
+          TARGETS="dist package.json"
+          [ -f package-lock.json ] && TARGETS="${TARGETS} package-lock.json"
+          [ -f README.md ] && TARGETS="${TARGETS} README.md"
+          tar -czf "release/${TAR_NAME}" ${TARGETS}
 
       - name: Attest build provenance
         uses: actions/attest@v1

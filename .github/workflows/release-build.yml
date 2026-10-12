@@ -1,0 +1,54 @@
+name: release build
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        type: string
+        default: '20'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Package artifacts
+        run: |
+          mkdir -p release
+          TAR_NAME="llm-wiki-linter-${GITHUB_REF_NAME}.tar.gz"
+          tar -czf "release/${TAR_NAME}" dist package.json package-lock.json README.md
+
+      - name: Attest build provenance
+        uses: actions/attest@v1
+        with:
+          subject-path: 'release/llm-wiki-linter-*.tar.gz'
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts-${{ github.ref_name }}
+          path: 'release/llm-wiki-linter-*.tar.gz'
+          if-no-files-found: error
+          retention-days: 1

@@ -45,7 +45,7 @@ jobs:
           tar -czf "release/${TAR_NAME}" ${TARGETS}
 
       - name: Attest build provenance
-        uses: actions/attest@v1
+        uses: actions/attest-build-provenance@v2
         with:
           subject-path: 'release/llm-wiki-linter-*.tar.gz'
 

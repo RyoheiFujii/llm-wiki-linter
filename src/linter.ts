@@ -22,8 +22,8 @@ function runFullWikiLint(): void {
       const linkRegex = /\[([^\]]+)\]\(([^)]*)\)/g;
       let match;
       while ((match = linkRegex.exec(text)) !== null) {
-        const linkText = match;
-        const url = match.trim();
+        const linkText = match[1];
+        const url = match[2].trim();
         if (!url || url === '#' || !url.startsWith('http')) {
           issues.push({
             docName: doc.name,

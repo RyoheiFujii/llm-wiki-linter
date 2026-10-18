@@ -8,12 +8,12 @@ import { WIKI_DOCS, MasterDoc } from './masters';
  */
 export type DeterministicStatus = 'PASS' | 'FAIL' | 'UNKNOWN';
 
-export type LintRuleId = 'WIKI-001' | 'WIKI-002' | 'WIKI-003' | 'WIKI-004';
+export type LintRuleId = 'WIKI-001' | 'WIKI-002' | 'WIKI-003' | 'WIKI-004' | 'WIKI-005';
 
 export interface LintIssue {
   ruleId: LintRuleId;
   docName: string;
-  category: 'BrokenLink' | 'DateFormat' | 'SensitiveData' | 'OpenQuestion';
+  category: 'BrokenLink' | 'DateFormat' | 'SensitiveData' | 'OpenQuestion' | 'LogSizeGuard';
   status: DeterministicStatus;
   message: string;
   lineSnippet?: string;
@@ -43,8 +43,23 @@ export function runFullWikiLint(): LintAuditResult {
   for (const doc of WIKI_DOCS) {
     try {
       const gDoc = DocumentApp.openById(doc.id);
-      const text = gDoc.getBody().getText();
+      const body = gDoc.getBody();
+      const text = body.getText();
       scannedCount++;
+
+      // WIKI-005: log.md 肥大化・ネスト表検知ガード (50,000文字上限 / テーブル数5上限)
+      if (doc.name === 'log.md' || doc.id === '15m6Rk7ey3rUoFY4zpP9R0NxTKHF8iecI0wd9ea8GKxI') {
+        const tableCount = body.getTables().length;
+        if (text.length > 50000 || tableCount > 5) {
+          issues.push({
+            ruleId: 'WIKI-005',
+            docName: doc.name,
+            category: 'LogSizeGuard',
+            status: 'FAIL',
+            message: `log.md 肥大化・ネスト表検知 (文字数: ${text.length}/上限50,000, テーブル数: ${tableCount}/上限5)。月次アーカイブ分割を実行してください。`
+          });
+        }
+      }
 
       // WIKI-001: 破損・不正URLチェック (FAIL判定)
       const linkRegex = /\[([^\]]+)\]\(([^)]*)\)/g;
@@ -141,6 +156,12 @@ export function runFullWikiLint(): LintAuditResult {
       name: 'Open Questions & Backlog TODOs',
       status: issues.some(i => i.ruleId === 'WIKI-004') ? 'UNKNOWN' : 'PASS',
       count: issues.filter(i => i.ruleId === 'WIKI-004').length
+    },
+    {
+      ruleId: 'WIKI-005',
+      name: 'log.md Size & Table Bloat Guard (<=50KB / <=5 tables)',
+      status: issues.some(i => i.ruleId === 'WIKI-005' && i.status === 'FAIL') ? 'FAIL' : 'PASS',
+      count: issues.filter(i => i.ruleId === 'WIKI-005').length
     }
   ];
 

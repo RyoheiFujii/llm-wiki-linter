@@ -15,6 +15,7 @@ AGENTS.md #15（SEC-08）「Judge by Rule, Explain by LLM」の原則に準拠�
 | `WIKI-002` | Date Format Standard | `FAIL` | スラッシュ区切り日付（`YYYY/MM/DD`）の表記揺れ（標準形式 `YYYY-MM-DD` への準拠） |
 | `WIKI-003` | Sensitive Identifier Scan | `UNKNOWN` | 12桁の連続数値など、マイナンバー等の機密識別子候補の検知（文脈確認が必要） |
 | `WIKI-004` | Open Questions & Backlog | `UNKNOWN` | 「【未解決の問い】」「要確認」「TODO」等の未確定事項・宿題の抽出 |
+| `WIKI-005` | log.md Size & Table Bloat Guard | `FAIL` | `log.md` のサイズ上限超過（50,000文字 / 約50KB超）またはテーブル数超過（`tables > 5`）の検知・月次アーカイブ分割アラート |
 
 ## 開発・ビルドコマンド
 

@@ -8,10 +8,10 @@ export const WIKI_DOCS: MasterDoc[] = [
   // システム・インデックス
   { id: '1zHch9Vm6lqFcAjqnoimzvA3yMmB8eWohKDTjKN_QOVA', name: 'README.md', category: 'System' },
   { id: '15m6Rk7ey3rUoFY4zpP9R0NxTKHF8iecI0wd9ea8GKxI', name: 'log.md', category: 'Log' },
-  { id: '1ZwSQ3l-FkJWs0nyrV4dTBoXLTEzRdg65NimYUWHjlBw', name: 'about-me.md', category: 'Index' },
+  { id: '15wclH8aaUUfGRDIa0WbWvK-OCXmzEq4PRltDM2UiLdg', name: 'about-me.md', category: 'Index' },
   { id: '1NHxO8BYohEEJ0zcDPUQhrdjqWZVy4PDWaKDqFfyiQm4', name: 'AGENTS.md', category: 'Rules' },
 
-  // 全21領域マスター
+  // 全領域マスター
   { id: '1-oJE5_EXjjalsCKP2U9RR097ALZISnZJDgdOiokMnm4', name: 'about-home.md', category: 'Home' },
   { id: '11xJkO0tDb5EgHC9vQ40PZCAdStSzCmgrQmPCT6T0Puk', name: 'about-car.md', category: 'Car' },
   { id: '1-BlSOW2Ps4iVNYZfbBZ3Vq627CeQAVMOmyHgcQJ5TtA', name: 'about-pet.md', category: 'Pet' },
@@ -22,7 +22,7 @@ export const WIKI_DOCS: MasterDoc[] = [
   { id: '1H0nKiYjiECDg2ZP97tsVV_i83UxwpeKmAjK9Z3kVV0E', name: 'about-career.md', category: 'Career' },
   { id: '1Y23lkuI9XTlbapv3L9kmGrn1uFYtYUP_VbUTbSPxSZw', name: 'about-travel.md', category: 'Travel' },
   { id: '12DuaaCiVmRR8rzcZ90_8-cXFdoEDm0pLuG10vFzMH3g', name: 'about-gourmet.md', category: 'Gourmet' },
-  { id: '1ZkgbR4n3TP95xJ9ih4SOFY-A1Sj8QMVd78pf4ucWWzs', name: 'about-health.md', category: 'Health' },
+  { id: '1rAPObrOr2rRMnJyxwtRZ50geFJL3KvuzdT6EkeK8Nc4', name: 'about-health.md', category: 'Health' },
   { id: '1qUzmDNZRG_eOqdY5fhTdQt4v1h6pU_qVlhnHdqjlxE0', name: 'about-entertainment.md', category: 'Entertainment' },
   { id: '194jlNXvYVe-wbvqUv7M7Vm6srHkENhNBW8Y8Dp1pCQI', name: 'about-family.md', category: 'Family' },
   { id: '12J1dl1BN3m98BdIBq6edWk2kcqeCDmWIFVKPNqRNZ2U', name: 'about-finance.md', category: 'Finance' },

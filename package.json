@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run build && node --test test/linter.test.ts",
-    "build": "tsc && node -e \"const fs=require('fs');['dist/masters.js','dist/linter.js'].forEach(f=>{const s=fs.readFileSync(f,'utf8').replace(/^import\\s+.*?;\\r?\\n/gm,'').replace(/^export\\s+/gm,'');fs.writeFileSync(f,s);});fs.copyFileSync('src/appsscript.json','dist/appsscript.json');\"",
+    "build": "tsc && node -e \"const fs=require('fs');['dist/masters.js','dist/linter.js'].forEach(f=>{const s=fs.readFileSync(f,'utf8').replace(/^import\\s+.*?;\\r?\\n/gm,'').replace(/^export\\s+/gm,'');fs.writeFileSync(f,s);});if(fs.existsSync('dist/types.js'))fs.unlinkSync('dist/types.js');fs.copyFileSync('src/appsscript.json','dist/appsscript.json');\"",
     "deploy": "npm run build && clasp push -f"
   },
   "repository": {

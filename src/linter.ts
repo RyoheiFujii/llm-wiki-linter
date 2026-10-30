@@ -1,44 +1,100 @@
 import { WIKI_DOCS, MasterDoc } from './masters';
+import type {
+  DeterministicStatus,
+  LintRuleId,
+  RuleCategory,
+  LintIssue,
+  RuleSummary,
+  LintAuditResult
+} from './types';
+
+export type {
+  DeterministicStatus,
+  LintRuleId,
+  RuleCategory,
+  LintIssue,
+  RuleSummary,
+  LintAuditResult
+};
+
+export const EXCLUDED_ORPHAN_DOCS = [
+  'about-me.md',
+  'README.md',
+  'log.md',
+  'AGENTS.md',
+  'custom-instructions-master.md'
+];
 
 /**
- * 決定論的ルール判定ステータス（Judge by Rule, Explain by LLM）
- * - PASS: 決定論的検査に完全に適合
- * - FAIL: 明確なルール違反（破損リンク、スラッシュ日付等）
- * - UNKNOWN: 文脈依存・意味的解釈が必要であり、LLM調査および上位レビューへの委譲対象
+ * WIKI-006: 単一ドキュメント本文からクロスリファレンスを抽出・検証し、被参照カウントを加算する
  */
-export type DeterministicStatus = 'PASS' | 'FAIL' | 'UNKNOWN';
+export function checkCrossReferencesInText(
+  text: string,
+  docName: string,
+  validDocNames: Set<string>,
+  inboundRefCount: Map<string, number>
+): LintIssue[] {
+  const issues: LintIssue[] = [];
+  const crossRefRegex = /\babout-[a-z0-9_-]+\.md\b/g;
+  let match: RegExpExecArray | null;
 
-export type LintRuleId = 'WIKI-001' | 'WIKI-002' | 'WIKI-003' | 'WIKI-004' | 'WIKI-005';
+  while ((match = crossRefRegex.exec(text)) !== null) {
+    const targetDocName = match[0];
+    if (!validDocNames.has(targetDocName)) {
+      issues.push({
+        ruleId: 'WIKI-006',
+        docName: docName,
+        category: 'BrokenCrossReference',
+        status: 'FAIL',
+        message: `未登録のマスター文書へのクロスリファレンス（リンク切れ）を検知: "${targetDocName}"`
+      });
+    } else {
+      if (targetDocName !== docName) {
+        inboundRefCount.set(targetDocName, (inboundRefCount.get(targetDocName) || 0) + 1);
+      }
+    }
+  }
 
-export interface LintIssue {
-  ruleId: LintRuleId;
-  docName: string;
-  category: 'BrokenLink' | 'DateFormat' | 'SensitiveData' | 'OpenQuestion' | 'LogSizeGuard';
-  status: DeterministicStatus;
-  message: string;
-  lineSnippet?: string;
+  return issues;
 }
 
-export interface RuleSummary {
-  ruleId: LintRuleId;
-  name: string;
-  status: DeterministicStatus;
-  count: number;
-}
+/**
+ * WIKI-006: 全ドキュメント走査後に、被参照カウントが 0 の孤立マスターを検出する
+ */
+export function detectOrphanDocuments(
+  allDocNames: string[],
+  inboundRefCount: Map<string, number>,
+  excludedDocs: string[] = EXCLUDED_ORPHAN_DOCS
+): LintIssue[] {
+  const issues: LintIssue[] = [];
 
-export interface LintAuditResult {
-  timestamp: string;
-  overallStatus: DeterministicStatus;
-  scannedDocs: number;
-  totalDocs: number;
-  ruleSummaries: RuleSummary[];
-  issues: LintIssue[];
+  for (const docName of allDocNames) {
+    if (excludedDocs.includes(docName)) {
+      continue;
+    }
+    const refCount = inboundRefCount.get(docName) || 0;
+    if (refCount === 0) {
+      issues.push({
+        ruleId: 'WIKI-006',
+        docName: docName,
+        category: 'OrphanDocument',
+        status: 'UNKNOWN',
+        message: `他のマスター文書からの被参照リンクが存在しない孤立マスター (Inbound Refs: 0)`
+      });
+    }
+  }
+
+  return issues;
 }
 
 export function runFullWikiLint(): LintAuditResult {
   Logger.log('=== LLM Wiki Health & Lint Audit 開始 (SEC-08: Judge by Rule) ===');
   const issues: LintIssue[] = [];
   let scannedCount = 0;
+
+  // WIKI-006 準備: 全マスター名集合と被参照カウンター
+  const validDocNames = new Set(WIKI_DOCS.map(d => d.name));
+  const inboundRefCount = new Map<string, number>(WIKI_DOCS.map(d => [d.name, 0]));
 
   for (const doc of WIKI_DOCS) {
     try {
@@ -63,7 +119,7 @@ export function runFullWikiLint(): LintAuditResult {
 
       // WIKI-001: 破損・不正URLチェック (FAIL判定)
       const linkRegex = /\[([^\]]+)\]\(([^)]*)\)/g;
-      let match;
+      let match: RegExpExecArray | null;
       while ((match = linkRegex.exec(text)) !== null) {
         const linkText = match[1];
         const url = match[2].trim();
@@ -80,7 +136,7 @@ export function runFullWikiLint(): LintAuditResult {
 
       // WIKI-002: 日付表記揺れチェック (FAIL判定)
       const slashDateRegex = /\b202\d\/(?:0?[1-9]|1[0-2])\/(?:0?[1-9]|[12]\d|3[01])\b/g;
-      let dateMatch;
+      let dateMatch: RegExpExecArray | null;
       while ((dateMatch = slashDateRegex.exec(text)) !== null) {
         issues.push({
           ruleId: 'WIKI-002',
@@ -117,10 +173,18 @@ export function runFullWikiLint(): LintAuditResult {
         }
       }
 
+      // WIKI-006: クロスリファレンス抽出 & 被参照カウント
+      const crossRefIssues = checkCrossReferencesInText(text, doc.name, validDocNames, inboundRefCount);
+      issues.push(...crossRefIssues);
+
     } catch (e: any) {
       Logger.log(`[エラー] ${doc.name} の読み込みに失敗: ${e.message}`);
     }
   }
+
+  // WIKI-006: 全ドキュメント走査完了後、孤立マスター (Orphan Documents) 判定
+  const orphanIssues = detectOrphanDocuments(WIKI_DOCS.map(d => d.name), inboundRefCount, EXCLUDED_ORPHAN_DOCS);
+  issues.push(...orphanIssues);
 
   const failCount = issues.filter(i => i.status === 'FAIL').length;
   const unknownCount = issues.filter(i => i.status === 'UNKNOWN').length;
@@ -148,13 +212,13 @@ export function runFullWikiLint(): LintAuditResult {
     {
       ruleId: 'WIKI-003',
       name: 'Sensitive Identifier Scan',
-      status: issues.some(i => i.ruleId === 'WIKI-003') ? 'UNKNOWN' : 'PASS',
+      status: issues.some(i => i.ruleId === 'WIKI-003' && i.status === 'UNKNOWN') ? 'UNKNOWN' : 'PASS',
       count: issues.filter(i => i.ruleId === 'WIKI-003').length
     },
     {
       ruleId: 'WIKI-004',
       name: 'Open Questions & Backlog TODOs',
-      status: issues.some(i => i.ruleId === 'WIKI-004') ? 'UNKNOWN' : 'PASS',
+      status: issues.some(i => i.ruleId === 'WIKI-004' && i.status === 'UNKNOWN') ? 'UNKNOWN' : 'PASS',
       count: issues.filter(i => i.ruleId === 'WIKI-004').length
     },
     {
@@ -162,6 +226,16 @@ export function runFullWikiLint(): LintAuditResult {
       name: 'log.md Size & Table Bloat Guard (<=50KB / <=5 tables)',
       status: issues.some(i => i.ruleId === 'WIKI-005' && i.status === 'FAIL') ? 'FAIL' : 'PASS',
       count: issues.filter(i => i.ruleId === 'WIKI-005').length
+    },
+    {
+      ruleId: 'WIKI-006',
+      name: 'Cross-Reference & Orphan Guard',
+      status: issues.some(i => i.ruleId === 'WIKI-006' && i.status === 'FAIL')
+        ? 'FAIL'
+        : issues.some(i => i.ruleId === 'WIKI-006' && i.status === 'UNKNOWN')
+        ? 'UNKNOWN'
+        : 'PASS',
+      count: issues.filter(i => i.ruleId === 'WIKI-006').length
     }
   ];
 

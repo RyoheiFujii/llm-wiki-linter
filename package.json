@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run build && node --test test/linter.test.ts",
     "build": "tsc && node -e \"const fs=require('fs');['dist/masters.js','dist/linter.js'].forEach(f=>{const s=fs.readFileSync(f,'utf8').replace(/^import\\s+.*?;\\r?\\n/gm,'').replace(/^export\\s+/gm,'');fs.writeFileSync(f,s);});fs.copyFileSync('src/appsscript.json','dist/appsscript.json');\"",
     "deploy": "npm run build && clasp push -f"
   },

@@ -1,0 +1,16 @@
+{
+  "syntax-validator": {
+    "PostToolUse": [
+      {
+        "matcher": "write_file|edit_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node --no-warnings -e \"fs=require('fs'),path=require('path'),mod=require('module');raw='';try{raw=fs.readFileSync(0,'utf8')}catch{}data=raw.trim()?JSON.parse(raw):{};target=data.toolCall&&data.toolCall.args&&data.toolCall.args.Path?path.resolve(data.toolCall.args.Path):'';repoRoot=path.resolve(process.cwd(),'..');if(target&&target.toLowerCase().startsWith(repoRoot.toLowerCase())&&fs.existsSync(target)){if(/\\.(ts|js)$/i.test(target)){mod.stripTypeScriptTypes(fs.readFileSync(target,'utf8'))}if(/\\.json$/i.test(target)){JSON.parse(fs.readFileSync(target,'utf8'))}}process.stdout.write('{}\\n');\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}
